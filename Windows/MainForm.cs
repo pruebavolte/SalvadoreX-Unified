@@ -70,22 +70,66 @@ public partial class MainForm : Form
             // Exponer API nativa a JavaScript
             webView.CoreWebView2.AddHostObjectToScript("nativeApi", new NativeBridge(_db, _sync));
             
-            // Inyectar script para API nativa
+            // Inyectar script para API nativa (usando proxy síncrono)
             await webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
-                window.NativeAPI = {
-                    isOffline: () => chrome.webview.hostObjects.nativeApi.IsOffline,
-                    getProducts: () => chrome.webview.hostObjects.nativeApi.GetProducts(),
-                    saveProduct: (json) => chrome.webview.hostObjects.nativeApi.SaveProduct(json),
-                    getCustomers: () => chrome.webview.hostObjects.nativeApi.GetCustomers(),
-                    saveCustomer: (json) => chrome.webview.hostObjects.nativeApi.SaveCustomer(json),
-                    saveSale: (json) => chrome.webview.hostObjects.nativeApi.SaveSale(json),
-                    getSales: () => chrome.webview.hostObjects.nativeApi.GetSales(),
-                    getSetting: (key) => chrome.webview.hostObjects.nativeApi.GetSetting(key),
-                    setSetting: (key, value) => chrome.webview.hostObjects.nativeApi.SetSetting(key, value),
-                    syncNow: () => chrome.webview.hostObjects.nativeApi.SyncNow(),
-                    getHardwareId: () => chrome.webview.hostObjects.nativeApi.GetHardwareId()
-                };
-                console.log('NativeAPI initialized for offline support');
+                (function() {
+                    const api = chrome.webview.hostObjects.sync.nativeApi;
+                    window.NativeAPI = {
+                        isOffline: function() { 
+                            try { return api.IsOffline; } 
+                            catch(e) { console.error('isOffline error:', e); return true; } 
+                        },
+                        getProducts: function() { 
+                            try { return api.GetProducts(); } 
+                            catch(e) { console.error('getProducts error:', e); return '[]'; } 
+                        },
+                        saveProduct: function(json) { 
+                            try { api.SaveProduct(json); } 
+                            catch(e) { console.error('saveProduct error:', e); } 
+                        },
+                        getCategories: function() { 
+                            try { return api.GetCategories(); } 
+                            catch(e) { console.error('getCategories error:', e); return '[]'; } 
+                        },
+                        saveCategory: function(json) { 
+                            try { api.SaveCategory(json); } 
+                            catch(e) { console.error('saveCategory error:', e); } 
+                        },
+                        getCustomers: function() { 
+                            try { return api.GetCustomers(); } 
+                            catch(e) { console.error('getCustomers error:', e); return '[]'; } 
+                        },
+                        saveCustomer: function(json) { 
+                            try { api.SaveCustomer(json); } 
+                            catch(e) { console.error('saveCustomer error:', e); } 
+                        },
+                        getSales: function() { 
+                            try { return api.GetSales(); } 
+                            catch(e) { console.error('getSales error:', e); return '[]'; } 
+                        },
+                        saveSale: function(json) { 
+                            try { api.SaveSale(json); } 
+                            catch(e) { console.error('saveSale error:', e); } 
+                        },
+                        getSetting: function(key) { 
+                            try { return api.GetSetting(key); } 
+                            catch(e) { console.error('getSetting error:', e); return ''; } 
+                        },
+                        setSetting: function(key, value) { 
+                            try { api.SetSetting(key, value); } 
+                            catch(e) { console.error('setSetting error:', e); } 
+                        },
+                        syncNow: function() { 
+                            try { api.SyncNow(); } 
+                            catch(e) { console.error('syncNow error:', e); } 
+                        },
+                        getHardwareId: function() { 
+                            try { return api.GetHardwareId(); } 
+                            catch(e) { console.error('getHardwareId error:', e); return 'ERROR'; } 
+                        }
+                    };
+                    console.log('NativeAPI initialized with sync proxy');
+                })();
             ");
             
             // Cargar aplicación web

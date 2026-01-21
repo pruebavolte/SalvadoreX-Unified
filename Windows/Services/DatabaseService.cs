@@ -130,9 +130,10 @@ public class DatabaseService
             var categories = new[]
             {
                 ("cat_1", "Bebidas", "Refrescos, jugos, agua"),
-                ("cat_2", "Alimentos", "Comida preparada"),
-                ("cat_3", "Snacks", "Botanas y dulces"),
-                ("cat_4", "General", "Productos generales")
+                ("cat_2", "Comidas", "Comida preparada"),
+                ("cat_3", "Postres", "Dulces y postres"),
+                ("cat_4", "Snacks", "Botanas"),
+                ("cat_5", "Entradas", "Entradas y aperitivos")
             };
             
             foreach (var (id, name, desc) in categories)
@@ -144,6 +145,45 @@ public class DatabaseService
                 cmd.Parameters.AddWithValue("@id", id);
                 cmd.Parameters.AddWithValue("@name", name);
                 cmd.Parameters.AddWithValue("@desc", desc);
+                cmd.Parameters.AddWithValue("@now", DateTime.UtcNow.ToString("o"));
+                await cmd.ExecuteNonQueryAsync();
+            }
+        }
+        
+        // Seed demo products
+        var checkProducts = new SqliteCommand("SELECT COUNT(*) FROM products", connection);
+        var productCount = Convert.ToInt32(await checkProducts.ExecuteScalarAsync());
+        
+        if (productCount == 0)
+        {
+            var products = new[]
+            {
+                ("prod_1", "Coca Cola 600ml", 25.00m, 50, "Bebidas", "COCA600"),
+                ("prod_2", "Hamburguesa Clasica", 89.00m, 30, "Comidas", "HAMB001"),
+                ("prod_3", "Hamburguesa con Queso", 99.00m, 25, "Comidas", "HAMB002"),
+                ("prod_4", "Agua Natural 500ml", 15.00m, 100, "Bebidas", "AGUA500"),
+                ("prod_5", "Tacos de Asada (3)", 75.00m, 40, "Comidas", "TACO003"),
+                ("prod_6", "Flan de Caramelo", 55.00m, 20, "Postres", "FLAN001"),
+                ("prod_7", "Helado Vainilla", 45.00m, 15, "Postres", "HELA001"),
+                ("prod_8", "Pizza Pepperoni", 145.00m, 20, "Comidas", "PIZZ001"),
+                ("prod_9", "Jugo de Naranja", 35.00m, 30, "Bebidas", "JUGO001"),
+                ("prod_10", "Papas Fritas", 40.00m, 50, "Snacks", "PAPA001"),
+                ("prod_11", "Café Americano", 30.00m, 100, "Bebidas", "CAFE001")
+            };
+            
+            foreach (var (id, name, price, stock, category, sku) in products)
+            {
+                var cmd = new SqliteCommand(@"
+                    INSERT INTO products (id, name, price, stock, category_id, sku, active, available_pos, need_sync, created_at, updated_at) 
+                    VALUES (@id, @name, @price, @stock, @category, @sku, 1, 1, 1, @now, @now)",
+                    connection
+                );
+                cmd.Parameters.AddWithValue("@id", id);
+                cmd.Parameters.AddWithValue("@name", name);
+                cmd.Parameters.AddWithValue("@price", price);
+                cmd.Parameters.AddWithValue("@stock", stock);
+                cmd.Parameters.AddWithValue("@category", category);
+                cmd.Parameters.AddWithValue("@sku", sku);
                 cmd.Parameters.AddWithValue("@now", DateTime.UtcNow.ToString("o"));
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -169,6 +209,47 @@ public class DatabaseService
                 await cmd.ExecuteNonQueryAsync();
             }
         }
+    }
+    
+    public async Task<string> GetCategoriesAsync()
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+        
+        var cmd = new SqliteCommand("SELECT * FROM categories WHERE active = 1", connection);
+        var categories = new List<Dictionary<string, object>>();
+        
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            categories.Add(ReadRow(reader));
+        }
+        
+        return JsonConvert.SerializeObject(categories);
+    }
+    
+    public async Task SaveCategoryAsync(string json)
+    {
+        var category = JsonConvert.DeserializeObject<Dictionary<string, object>>(json)!;
+        
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+        
+        var id = category.GetValueOrDefault("id")?.ToString() ?? Guid.NewGuid().ToString();
+        var now = DateTime.UtcNow.ToString("o");
+        
+        var cmd = new SqliteCommand(@"
+            INSERT OR REPLACE INTO categories (id, name, description, parent_id, sort_order, active, need_sync, created_at, updated_at)
+            VALUES (@id, @name, @description, @parent_id, @sort_order, 1, 1, @now, @now)", connection);
+        
+        cmd.Parameters.AddWithValue("@id", id);
+        cmd.Parameters.AddWithValue("@name", category.GetValueOrDefault("name", ""));
+        cmd.Parameters.AddWithValue("@description", category.GetValueOrDefault("description") ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@parent_id", category.GetValueOrDefault("parent_id") ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@sort_order", Convert.ToInt32(category.GetValueOrDefault("sort_order", 0)));
+        cmd.Parameters.AddWithValue("@now", now);
+        
+        await cmd.ExecuteNonQueryAsync();
     }
     
     public async Task<string> GetProductsAsync()

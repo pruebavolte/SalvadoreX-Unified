@@ -68,4 +68,14 @@ public class NativeBridge
     {
         return _licensing.GetHardwareId();
     }
+    
+    public string GetCategories()
+    {
+        return _db.GetCategoriesAsync().GetAwaiter().GetResult();
+    }
+    
+    public void SaveCategory(string json)
+    {
+        _db.SaveCategoryAsync(json).GetAwaiter().GetResult();
+    }
 }
