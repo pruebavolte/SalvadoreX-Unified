@@ -5,7 +5,7 @@ namespace SalvadoreXPOS.Services;
 
 public class DatabaseService
 {
-    private string _connectionString;
+    private string _connectionString = "";
     
     public async Task InitializeAsync()
     {
@@ -338,10 +338,10 @@ public class DatabaseService
                 itemCmd.Parameters.AddWithValue("@sale_id", id);
                 itemCmd.Parameters.AddWithValue("@product_id", item["product_id"]?.ToString() ?? "");
                 itemCmd.Parameters.AddWithValue("@product_name", item["product_name"]?.ToString() ?? "");
-                itemCmd.Parameters.AddWithValue("@quantity", item["quantity"]?.Value<int>() ?? 1);
-                itemCmd.Parameters.AddWithValue("@unit_price", item["unit_price"]?.Value<decimal>() ?? 0);
-                itemCmd.Parameters.AddWithValue("@discount", item["discount"]?.Value<decimal>() ?? 0);
-                itemCmd.Parameters.AddWithValue("@total", item["total"]?.Value<decimal>() ?? 0);
+                itemCmd.Parameters.AddWithValue("@quantity", item["quantity"]?.ToObject<int>() ?? 1);
+                itemCmd.Parameters.AddWithValue("@unit_price", item["unit_price"]?.ToObject<decimal>() ?? 0);
+                itemCmd.Parameters.AddWithValue("@discount", item["discount"]?.ToObject<decimal>() ?? 0);
+                itemCmd.Parameters.AddWithValue("@total", item["total"]?.ToObject<decimal>() ?? 0);
                 
                 await itemCmd.ExecuteNonQueryAsync();
             }
