@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SalvadoreX POS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        'primary-dark': '#1d4ed8',
+                        sidebar: '#0f172a',
+                        'sidebar-hover': '#1e293b',
+                        'sidebar-active': '#2563eb',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .product-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .product-card { transition: all 0.2s ease; }
+        .sidebar-item:hover { background: #1e293b; }
+        .sidebar-item.active { background: #2563eb; }
+        .category-tab.active { background: #2563eb; color: white; }
+        .category-tab { transition: all 0.2s ease; }
+        .cart-item { animation: slideIn 0.2s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+        .bounce { animation: bounce 0.3s ease; }
+    </style>
+</head>
+<body class="bg-gray-50 h-screen overflow-hidden">
+    <div id="app" class="flex h-full">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="w-56 bg-sidebar flex flex-col h-full flex-shrink-0">
+            <!-- Logo -->
+            <div class="p-4 border-b border-gray-700">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl font-bold text-white">SalvadoreX</span>
+                </div>
+            </div>
+            
+            <!-- Navigation -->
+            <nav class="flex-1 py-2 overflow-y-auto scrollbar-hide">
+                <div class="px-2 space-y-1">
+                    <a href="#" class="sidebar-item active flex items-center gap-3 px-3 py-2.5 rounded-lg text-white" data-page="pos">
+                        <i class="fas fa-cash-register w-5 text-center"></i>
+                        <span>POS</span>
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-300" data-page="cocina">
+                        <i class="fas fa-utensils w-5 text-center"></i>
+                        <span>Cocina</span>
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-300" data-page="corte">
+                        <i class="fas fa-calculator w-5 text-center"></i>
+                        <span>Corte de Caja</span>
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-300" data-page="fila">
+                        <i class="fas fa-users w-5 text-center"></i>
+                        <span>Fila Virtual</span>
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-300" data-page="dashboard">
+                        <i class="fas fa-chart-line w-5 text-center"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-300" data-page="inventario">
+                        <i class="fas fa-boxes w-5 text-center"></i>
+                        <span>Inventario</span>
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-300" data-page="ingredientes">
+                        <i class="fas fa-carrot w-5 text-center"></i>
+                        <span>Ingredientes</span>
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-300" data-page="menu-digital">
+                        <i class="fas fa-qrcode w-5 text-center"></i>
+                        <span>Menu Digital</span>
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-300" data-page="devoluciones">
+                        <i class="fas fa-undo w-5 text-center"></i>
+                        <span>Devoluciones</span>
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-300" data-page="clientes">
+                        <i class="fas fa-user-friends w-5 text-center"></i>
+                        <span>Clientes</span>
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-300" data-page="solicitudes">
+                        <i class="fas fa-clipboard-list w-5 text-center"></i>
+                        <span>Solicitudes</span>
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-300" data-page="reportes">
+                        <i class="fas fa-file-alt w-5 text-center"></i>
+                        <span>Reportes</span>
+                    </a>
+                </div>
+            </nav>
+            
+            <!-- Footer -->
+            <div class="p-3 border-t border-gray-700">
+                <div class="flex items-center gap-2 text-gray-400 text-xs">
+                    <i class="fas fa-circle text-green-500 text-[8px]" id="status-indicator"></i>
+                    <span id="status-text">Modo Offline</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden">
+            <!-- Top Header -->
+            <header class="bg-white border-b px-4 py-3 flex items-center justify-between gap-4 flex-shrink-0">
+                <!-- Search -->
+                <div class="flex items-center gap-2 flex-1 max-w-xl">
+                    <div class="relative flex-1">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="search-input" placeholder="Buscar productos..." 
+                            class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <select id="category-filter-header" class="px-4 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option value="all">Todos</option>
+                    </select>
+                    <button class="p-2 text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-sliders-h"></i>
+                    </button>
+                </div>
+                
+                <!-- User -->
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-primary text-white rounded-full flex items-center justify-center font-semibold">
+                        S
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="flex-1 flex overflow-hidden">
+                <!-- Products Section -->
+                <div class="flex-1 flex flex-col overflow-hidden">
+                    <!-- Category Tabs -->
+                    <div class="bg-white border-b px-4 py-3 flex-shrink-0">
+                        <div class="flex flex-wrap gap-2" id="category-tabs">
+                            <button class="category-tab active px-4 py-2 rounded-full text-sm font-medium bg-primary text-white" data-category="all">
+                                Todos <span id="count-all">(0)</span>
+                            </button>
+                            <button class="category-tab px-4 py-2 rounded-full text-sm font-medium bg-gray-100 hover:bg-gray-200 text-gray-700" data-category="mas-vendidos">
+                                Más vendidos
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Products Grid -->
+                    <div class="flex-1 overflow-y-auto p-4 scrollbar-hide">
+                        <div id="products-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                            <!-- Products will be inserted here -->
+                        </div>
+                        
+                        <!-- Empty State -->
+                        <div id="empty-state" class="hidden flex-col items-center justify-center h-full text-gray-500">
+                            <i class="fas fa-box-open text-6xl mb-4"></i>
+                            <p class="text-lg">No hay productos</p>
+                            <p class="text-sm">Agrega productos en Inventario</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cart Sidebar -->
+                <aside id="cart-sidebar" class="w-80 bg-white border-l flex flex-col h-full flex-shrink-0">
+                    <!-- Cart Header -->
+                    <div class="p-4 border-b flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-shopping-cart text-gray-600"></i>
+                            <span class="font-semibold">Carrito</span>
+                            <span id="cart-count" class="bg-primary text-white text-xs px-2 py-0.5 rounded-full">0</span>
+                        </div>
+                        <button id="clear-cart-btn" class="text-red-500 hover:text-red-600 text-sm font-medium flex items-center gap-1">
+                            <i class="fas fa-trash-alt"></i>
+                            Limpiar
+                        </button>
+                    </div>
+
+                    <!-- Cart Items -->
+                    <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-hide">
+                        <!-- Cart items will be inserted here -->
+                        <div id="cart-empty" class="flex flex-col items-center justify-center h-full text-gray-400">
+                            <i class="fas fa-shopping-basket text-4xl mb-2"></i>
+                            <p>Carrito vacío</p>
+                        </div>
+                    </div>
+
+                    <!-- Cart Footer -->
+                    <div class="border-t p-4 space-y-3 bg-gray-50">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Subtotal</span>
+                            <span id="cart-subtotal">$0.00</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Descuento</span>
+                            <span id="cart-discount" class="text-red-500">-$0.00</span>
+                        </div>
+                        <div class="flex justify-between font-bold text-lg pt-2 border-t">
+                            <span>Total</span>
+                            <span id="cart-total" class="text-primary">$0.00</span>
+                        </div>
+                        <button id="checkout-btn" class="w-full py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary-dark transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <i class="fas fa-credit-card mr-2"></i>
+                            Cobrar
+                        </button>
+                    </div>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <!-- Inventario Page (hidden by default) -->
+    <div id="page-inventario" class="hidden fixed inset-0 bg-gray-50 z-40">
+        <div class="flex h-full">
+            <!-- Use same sidebar structure -->
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div class="p-4 bg-primary text-white flex justify-between items-center">
+                <h3 class="text-lg font-semibold">Procesar Pago</h3>
+                <button id="close-payment" class="hover:bg-white/20 p-1 rounded">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="text-center">
+                    <p class="text-gray-500">Total a cobrar</p>
+                    <p id="payment-total" class="text-4xl font-bold text-primary">$0.00</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Método de pago</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button class="payment-method active p-3 border-2 border-primary rounded-lg flex flex-col items-center gap-1 bg-blue-50" data-method="cash">
+                            <i class="fas fa-money-bill-wave text-xl text-primary"></i>
+                            <span class="text-sm">Efectivo</span>
+                        </button>
+                        <button class="payment-method p-3 border-2 border-gray-200 rounded-lg flex flex-col items-center gap-1 hover:border-gray-300" data-method="card">
+                            <i class="fas fa-credit-card text-xl text-gray-500"></i>
+                            <span class="text-sm">Tarjeta</span>
+                        </button>
+                        <button class="payment-method p-3 border-2 border-gray-200 rounded-lg flex flex-col items-center gap-1 hover:border-gray-300" data-method="transfer">
+                            <i class="fas fa-exchange-alt text-xl text-gray-500"></i>
+                            <span class="text-sm">Transfer</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="cash-amount-section">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad recibida</label>
+                    <input type="number" id="cash-amount" class="w-full p-3 border rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-primary" placeholder="0.00">
+                    <div class="mt-2 flex justify-between text-sm">
+                        <span class="text-gray-500">Cambio:</span>
+                        <span id="change-amount" class="font-semibold text-green-600">$0.00</span>
+                    </div>
+                </div>
+                <button id="complete-sale" class="w-full py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition">
+                    <i class="fas fa-check mr-2"></i>
+                    Completar Venta
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div id="add-product-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+            <div class="p-4 bg-primary text-white flex justify-between items-center">
+                <h3 class="text-lg font-semibold">Agregar Producto</h3>
+                <button id="close-add-product" class="hover:bg-white/20 p-1 rounded">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del producto *</label>
+                    <input type="text" id="new-product-name" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Ej: Coca Cola 600ml">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Precio *</label>
+                        <input type="number" id="new-product-price" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" placeholder="0.00" step="0.01">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Costo</label>
+                        <input type="number" id="new-product-cost" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" placeholder="0.00" step="0.01">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">SKU / Código</label>
+                        <input type="text" id="new-product-sku" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Ej: COCA600">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Stock inicial</label>
+                        <input type="number" id="new-product-stock" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" placeholder="0" value="0">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+                    <select id="new-product-category" class="w-full p-3 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option value="">Sin categoría</option>
+                    </select>
+                </div>
+                <button id="save-new-product" class="w-full py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary-dark transition">
+                    <i class="fas fa-plus mr-2"></i>
+                    Guardar Producto
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
